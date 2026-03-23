@@ -1,713 +1,410 @@
 {
   "calibration": {
-    "left": 0.032,
-    "top": 0.068,
-    "right": 0.975,
-    "bottom": 0.925
+    "left": 0.11814044792307105,
+    "top": 0.3471615720524017,
+    "right": 0.8947765770943304,
+    "bottom": 0.87117903930131
   },
   "points": [
     {
-      "id": 1,
-      "layer": "power",
-      "type": "panel",
-      "x": 4900,
-      "y": 5200,
-      "label": "配电箱",
-      "room": "入户"
-    },
-    {
-      "id": 2,
-      "layer": "weak",
-      "type": "weakpanel",
-      "x": 4900,
-      "y": 5400,
-      "label": "弱电箱",
-      "room": "入户"
-    },
-    {
-      "id": 3,
       "layer": "power",
       "type": "outlet5",
-      "x": 600,
-      "y": 1000,
-      "label": "电脑插座×2",
-      "room": "电竞室"
-    },
-    {
+      "x": 5617,
+      "y": -436,
+      "label": "插座×3",
+      "room": "电竞室",
       "id": 4,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 600,
-      "y": 1400,
-      "label": "显示器插座×2",
-      "room": "电竞室"
+      "_prevX": 5617,
+      "_prevY": -436
     },
     {
-      "id": 5,
       "layer": "power",
-      "type": "outlet16",
-      "x": 300,
-      "y": 600,
-      "label": "空调 16A",
-      "room": "电竞室"
-    },
-    {
-      "id": 6,
-      "layer": "power",
-      "type": "switch1",
-      "x": 3400,
-      "y": 2500,
-      "label": "单控（顶灯）",
-      "room": "电竞室"
-    },
-    {
+      "type": "ceiling",
+      "x": 2318,
+      "y": 2049,
+      "label": "吸顶灯",
+      "room": "电竞室",
       "id": 7,
-      "layer": "power",
-      "type": "ceiling",
-      "x": 1900,
-      "y": 1400,
-      "label": "吸顶灯",
-      "room": "电竞室"
+      "_prevX": 2418,
+      "_prevY": 1936
     },
     {
+      "layer": "weak",
+      "type": "network",
+      "x": 5613,
+      "y": -20,
+      "label": "网线",
+      "room": "电竞室",
       "id": 8,
-      "layer": "weak",
-      "type": "network",
-      "x": 800,
-      "y": 1000,
-      "label": "网线",
-      "room": "电竞室"
+      "_prevX": 5628,
+      "_prevY": -42
     },
     {
-      "id": 9,
       "layer": "power",
       "type": "outlet5",
-      "x": 600,
-      "y": 3200,
+      "x": 313,
+      "y": 1026,
       "label": "床头左",
-      "room": "次卧"
+      "room": "次卧",
+      "id": 9,
+      "_prevX": 708,
+      "_prevY": 1182
     },
     {
+      "layer": "power",
+      "type": "outlet5",
+      "x": 3363,
+      "y": 1538,
+      "label": "书桌x3",
+      "room": "次卧",
       "id": 10,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 2200,
-      "y": 3200,
-      "label": "床头右",
-      "room": "次卧"
+      "_prevX": 3363,
+      "_prevY": 1538
     },
     {
-      "id": 11,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 2800,
-      "y": 3600,
-      "label": "书桌插座×2",
-      "room": "次卧"
-    },
-    {
-      "id": 12,
-      "layer": "power",
-      "type": "outlet16",
-      "x": 300,
-      "y": 3000,
-      "label": "空调 16A",
-      "room": "次卧"
-    },
-    {
-      "id": 13,
       "layer": "power",
       "type": "switch2",
-      "x": 3400,
-      "y": 4400,
-      "label": "双控（门口）",
-      "room": "次卧"
-    },
-    {
+      "x": -6,
+      "y": 1018,
+      "label": "双控（床头）",
+      "room": "次卧",
       "id": 14,
+      "_prevX": -21,
+      "_prevY": 1036
+    },
+    {
       "layer": "power",
-      "type": "switch2",
-      "x": 1400,
-      "y": 3200,
-      "label": "双控（床头）",
-      "room": "次卧"
-    },
-    {
-      "id": 15,
-      "layer": "power",
-      "type": "ceiling",
-      "x": 1900,
-      "y": 3700,
-      "label": "吸顶灯",
-      "room": "次卧"
-    },
-    {
-      "id": 16,
-      "layer": "weak",
-      "type": "network",
-      "x": 2800,
-      "y": 3600,
-      "label": "网线",
-      "room": "次卧"
-    },
-    {
+      "type": "outlet5",
+      "x": 3070,
+      "y": 5825,
+      "label": "操作台插座×3",
+      "room": "厨房",
       "id": 17,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 500,
-      "y": 5800,
-      "label": "操作台插座×4",
-      "room": "厨房"
+      "_prevX": 3025,
+      "_prevY": 5831
     },
     {
+      "layer": "power",
+      "type": "outlet16",
+      "x": 1952,
+      "y": 5829,
+      "label": "洗碗机",
+      "room": "厨房",
       "id": 18,
-      "layer": "power",
-      "type": "outlet16",
-      "x": 1500,
-      "y": 6400,
-      "label": "洗碗机 16A",
-      "room": "厨房"
+      "_prevX": 1952,
+      "_prevY": 5829
     },
     {
-      "id": 19,
-      "layer": "power",
-      "type": "outlet16",
-      "x": 2100,
-      "y": 6400,
-      "label": "蒸烤箱 16A",
-      "room": "厨房"
-    },
-    {
-      "id": 20,
       "layer": "power",
       "type": "outlet5",
-      "x": 3200,
-      "y": 6000,
+      "x": 5429,
+      "y": 6134,
       "label": "冰箱",
-      "room": "厨房"
+      "room": "厨房",
+      "id": 20,
+      "_prevX": 5420,
+      "_prevY": 6134
     },
     {
-      "id": 21,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 500,
-      "y": 5500,
-      "label": "油烟机",
-      "room": "厨房"
-    },
-    {
-      "id": 22,
-      "layer": "power",
-      "type": "switch1",
-      "x": 3400,
-      "y": 5300,
-      "label": "开关（灯+灯带）",
-      "room": "厨房"
-    },
-    {
-      "id": 23,
       "layer": "power",
       "type": "ceiling",
-      "x": 1900,
-      "y": 6000,
+      "x": 2427,
+      "y": 4304,
       "label": "吸顶灯",
-      "room": "厨房"
+      "room": "厨房",
+      "id": 23,
+      "_prevX": 2233,
+      "_prevY": 4315
     },
     {
-      "id": 24,
-      "layer": "power",
-      "type": "strip",
-      "x": 1400,
-      "y": 5700,
-      "label": "操作台灯带",
-      "room": "厨房"
-    },
-    {
-      "id": 25,
       "layer": "power",
       "type": "outlet5",
-      "x": 5600,
-      "y": 1800,
-      "label": "防溅（吹风机）",
-      "room": "卫生间"
-    },
-    {
-      "id": 26,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 5800,
-      "y": 2000,
-      "label": "智能马桶",
-      "room": "卫生间"
-    },
-    {
-      "id": 27,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 4400,
-      "y": 1800,
-      "label": "电热毛巾架",
-      "room": "卫生间"
-    },
-    {
-      "id": 28,
-      "layer": "power",
-      "type": "switch1",
-      "x": 6200,
-      "y": 2200,
-      "label": "门外开关（灯+浴霸）",
-      "room": "卫生间"
-    },
-    {
-      "id": 29,
-      "layer": "power",
-      "type": "downlight",
-      "x": 5000,
-      "y": 1200,
-      "label": "筒灯",
-      "room": "卫生间"
-    },
-    {
-      "id": 30,
-      "layer": "power",
-      "type": "downlight",
-      "x": 5400,
-      "y": 1200,
-      "label": "筒灯",
-      "room": "卫生间"
-    },
-    {
-      "id": 31,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 4000,
-      "y": 3800,
-      "label": "墙面插座",
-      "room": "厅"
-    },
-    {
-      "id": 32,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 6800,
-      "y": 3800,
-      "label": "墙面插座",
-      "room": "厅"
-    },
-    {
-      "id": 33,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 5200,
-      "y": 4200,
-      "label": "地插（火锅）",
-      "room": "厅"
-    },
-    {
-      "id": 34,
-      "layer": "power",
-      "type": "switch1",
-      "x": 6800,
-      "y": 2800,
-      "label": "开关（顶灯）",
-      "room": "厅"
-    },
-    {
-      "id": 35,
-      "layer": "power",
-      "type": "ceiling",
-      "x": 5200,
-      "y": 3400,
-      "label": "餐厅吊灯",
-      "room": "厅"
-    },
-    {
-      "id": 36,
-      "layer": "weak",
-      "type": "wifi",
-      "x": 5200,
-      "y": 3400,
-      "label": "WiFi AP",
-      "room": "厅"
-    },
-    {
+      "x": 9320,
+      "y": -1003,
+      "label": "床头左x2",
+      "room": "主卧",
       "id": 37,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 9800,
-      "y": 1600,
-      "label": "床头左+USB",
-      "room": "主卧"
+      "_prevX": 9320,
+      "_prevY": -1003
     },
     {
-      "id": 38,
       "layer": "power",
       "type": "outlet5",
-      "x": 11600,
-      "y": 1600,
+      "x": 11843,
+      "y": -1003,
       "label": "床头右+USB",
-      "room": "主卧"
+      "room": "主卧",
+      "id": 38,
+      "_prevX": 11855,
+      "_prevY": -980
     },
     {
-      "id": 39,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 12400,
-      "y": 800,
-      "label": "书桌插座×2",
-      "room": "主卧"
-    },
-    {
-      "id": 40,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 12400,
-      "y": 2400,
-      "label": "梳妆台",
-      "room": "主卧"
-    },
-    {
-      "id": 41,
       "layer": "power",
       "type": "outlet16",
-      "x": 12800,
-      "y": 1800,
+      "x": 11646,
+      "y": 2801,
       "label": "空调 16A",
-      "room": "主卧"
+      "room": "主卧",
+      "id": 41,
+      "_prevX": 12800,
+      "_prevY": 1800
     },
     {
-      "id": 42,
       "layer": "power",
       "type": "switch2",
-      "x": 8400,
-      "y": 2800,
-      "label": "双控（门口）",
-      "room": "主卧"
-    },
-    {
-      "id": 43,
-      "layer": "power",
-      "type": "switch2",
-      "x": 10700,
-      "y": 1600,
+      "x": 11436,
+      "y": -1004,
       "label": "双控（床头）",
-      "room": "主卧"
+      "room": "主卧",
+      "id": 43,
+      "_prevX": 11442,
+      "_prevY": -996
     },
     {
-      "id": 44,
       "layer": "power",
       "type": "ceiling",
-      "x": 10800,
-      "y": 1800,
+      "x": 9958,
+      "y": 845,
       "label": "吸顶灯",
-      "room": "主卧"
+      "room": "主卧",
+      "id": 44,
+      "_prevX": 10426,
+      "_prevY": 1296
     },
     {
-      "id": 45,
       "layer": "power",
       "type": "strip",
-      "x": 10700,
-      "y": 1200,
+      "x": 9858,
+      "y": -1109,
       "label": "床头灯带",
-      "room": "主卧"
+      "room": "主卧",
+      "id": 45,
+      "_prevX": 9858,
+      "_prevY": -1117
     },
     {
-      "id": 46,
-      "layer": "weak",
-      "type": "network",
-      "x": 12400,
-      "y": 800,
-      "label": "网线",
-      "room": "主卧"
-    },
-    {
-      "id": 47,
       "layer": "power",
       "type": "outlet5",
-      "x": 7500,
-      "y": 5400,
-      "label": "沙发左",
-      "room": "会厅"
-    },
-    {
-      "id": 48,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 11000,
-      "y": 5400,
-      "label": "沙发右",
-      "room": "会厅"
-    },
-    {
-      "id": 49,
-      "layer": "power",
-      "type": "outlet5",
-      "x": 9200,
-      "y": 7100,
+      "x": 10061,
+      "y": 3481,
       "label": "电视墙×3",
-      "room": "会厅"
+      "room": "会厅",
+      "id": 49,
+      "_prevX": 9200,
+      "_prevY": 7100
     },
     {
-      "id": 50,
       "layer": "power",
       "type": "outlet5",
       "x": 12600,
       "y": 7000,
       "label": "扫地机器人",
-      "room": "会厅"
+      "room": "会厅",
+      "id": 50
     },
     {
-      "id": 51,
-      "layer": "power",
-      "type": "outlet16",
-      "x": 12800,
-      "y": 5000,
-      "label": "空调柜机 16A",
-      "room": "会厅"
-    },
-    {
-      "id": 52,
       "layer": "power",
       "type": "switch2",
-      "x": 7400,
-      "y": 4200,
-      "label": "双控（门口）",
-      "room": "会厅"
-    },
-    {
-      "id": 53,
-      "layer": "power",
-      "type": "switch2",
-      "x": 8800,
-      "y": 5800,
+      "x": 8469,
+      "y": 7214,
       "label": "双控（沙发旁）",
-      "room": "会厅"
+      "room": "会厅",
+      "id": 53,
+      "_prevX": 10583,
+      "_prevY": 6033
     },
     {
-      "id": 54,
       "layer": "power",
       "type": "ceiling",
-      "x": 9800,
-      "y": 5600,
+      "x": 9950,
+      "y": 4945,
       "label": "主灯",
-      "room": "会厅"
+      "room": "会厅",
+      "id": 54,
+      "_prevX": 9800,
+      "_prevY": 5600
     },
     {
-      "id": 55,
-      "layer": "power",
-      "type": "strip",
-      "x": 9800,
-      "y": 5000,
-      "label": "氛围灯带",
-      "room": "会厅"
-    },
-    {
-      "id": 56,
-      "layer": "power",
-      "type": "downlight",
-      "x": 8500,
-      "y": 5200,
-      "label": "筒灯",
-      "room": "会厅"
-    },
-    {
-      "id": 57,
-      "layer": "power",
-      "type": "downlight",
-      "x": 11000,
-      "y": 5200,
-      "label": "筒灯",
-      "room": "会厅"
-    },
-    {
-      "id": 58,
       "layer": "weak",
       "type": "network",
-      "x": 9200,
-      "y": 7100,
+      "x": 9680,
+      "y": 3466,
       "label": "网线+HDMI",
-      "room": "会厅"
+      "room": "会厅",
+      "id": 58,
+      "_prevX": 9518,
+      "_prevY": 3496
     },
     {
-      "id": 59,
       "layer": "water",
       "type": "hotcold",
-      "x": 700,
-      "y": 6500,
+      "x": 366,
+      "y": 4261,
       "label": "水槽冷热水",
-      "room": "厨房"
+      "room": "厨房",
+      "id": 59,
+      "_prevX": 305,
+      "_prevY": 4502
     },
     {
+      "layer": "water",
+      "type": "cold",
+      "x": 2597,
+      "y": 5833,
+      "label": "洗碗给水",
+      "room": "厨房",
       "id": 60,
-      "layer": "water",
-      "type": "cold",
-      "x": 1500,
-      "y": 6600,
-      "label": "洗碗机给水",
-      "room": "厨房"
+      "_prevX": 2606,
+      "_prevY": 5810
     },
     {
-      "id": 61,
       "layer": "water",
       "type": "drain",
-      "x": 700,
-      "y": 6700,
+      "x": 357,
+      "y": 4667,
       "label": "水槽排水",
-      "room": "厨房"
+      "room": "厨房",
+      "id": 61,
+      "_prevX": 636,
+      "_prevY": 5038
     },
     {
+      "layer": "water",
+      "type": "drain",
+      "x": 2263,
+      "y": 5829,
+      "label": "洗碗排水",
+      "room": "厨房",
       "id": 62,
-      "layer": "water",
-      "type": "drain",
-      "x": 1500,
-      "y": 6700,
-      "label": "洗碗机排水",
-      "room": "厨房"
+      "_prevX": 2275,
+      "_prevY": 5823
     },
     {
-      "id": 63,
-      "layer": "water",
-      "type": "hotcold",
-      "x": 400,
-      "y": 5100,
-      "label": "热水器进出水",
-      "room": "厨房"
-    },
-    {
-      "id": 64,
-      "layer": "water",
-      "type": "valve",
-      "x": 400,
-      "y": 5300,
-      "label": "总阀门",
-      "room": "厨房"
-    },
-    {
-      "id": 65,
-      "layer": "water",
-      "type": "hotcold",
-      "x": 5400,
-      "y": 1600,
-      "label": "洗手盆冷热水",
-      "room": "卫生间"
-    },
-    {
-      "id": 66,
-      "layer": "water",
-      "type": "cold",
-      "x": 5800,
-      "y": 2100,
-      "label": "马桶给水",
-      "room": "卫生间"
-    },
-    {
-      "id": 67,
-      "layer": "water",
-      "type": "hotcold",
-      "x": 4600,
-      "y": 700,
-      "label": "淋浴冷热水",
-      "room": "淋浴房"
-    },
-    {
-      "id": 68,
+      "id": 79,
       "layer": "water",
       "type": "floor_drain",
-      "x": 4800,
-      "y": 900,
-      "label": "地漏（湿区）",
-      "room": "淋浴房"
+      "x": 7065,
+      "y": 858,
+      "label": "地漏",
+      "room": "",
+      "_prevX": 7124,
+      "_prevY": 179
     },
     {
-      "id": 69,
+      "id": 81,
       "layer": "water",
       "type": "floor_drain",
-      "x": 5600,
-      "y": 1900,
-      "label": "地漏（干区）",
-      "room": "卫生间"
+      "x": 7308,
+      "y": -655,
+      "label": "地漏",
+      "room": "",
+      "_prevX": 7114,
+      "_prevY": -792
     },
     {
-      "id": 70,
-      "layer": "water",
-      "type": "drain",
-      "x": 5400,
-      "y": 1700,
-      "label": "洗手盆排水",
-      "room": "卫生间"
+      "layer": "power",
+      "type": "switch2",
+      "x": 3323,
+      "y": 2215,
+      "label": "双控（入门）",
+      "room": "次卧",
+      "id": 82,
+      "_prevX": 179,
+      "_prevY": 1236
     },
     {
-      "id": 71,
-      "layer": "water",
-      "type": "valve",
-      "x": 5200,
-      "y": 2300,
-      "label": "角阀",
-      "room": "卫生间"
+      "id": 83,
+      "layer": "power",
+      "type": "outlet16",
+      "x": 2240,
+      "y": 3278,
+      "label": "空调",
+      "room": "",
+      "_prevX": 1946,
+      "_prevY": 3287
+    },
+    {
+      "id": 84,
+      "layer": "power",
+      "type": "strip",
+      "x": 5619,
+      "y": -833,
+      "label": "灯带",
+      "room": "",
+      "_prevX": 5623,
+      "_prevY": -833
+    },
+    {
+      "layer": "power",
+      "type": "outlet5",
+      "x": 3657,
+      "y": 382,
+      "label": "插座×2",
+      "room": "电竞室",
+      "id": 85,
+      "_prevX": 3646,
+      "_prevY": 378
+    },
+    {
+      "id": 86,
+      "layer": "power",
+      "type": "ceiling",
+      "x": 4322,
+      "y": 239,
+      "label": "吸顶灯",
+      "room": "",
+      "_prevX": 4328,
+      "_prevY": -483
+    },
+    {
+      "id": 89,
+      "layer": "power",
+      "type": "switch1",
+      "x": 3636,
+      "y": 1538,
+      "label": "单控开关",
+      "room": "",
+      "_prevX": 3659,
+      "_prevY": 1517
+    },
+    {
+      "id": 90,
+      "layer": "power",
+      "type": "ceiling",
+      "x": 4359,
+      "y": -1954,
+      "label": "吸顶灯",
+      "room": ""
+    },
+    {
+      "id": 94,
+      "layer": "power",
+      "type": "outlet5",
+      "x": 1174,
+      "y": 3637,
+      "label": "五孔插座x2",
+      "room": "",
+      "_prevX": 1174,
+      "_prevY": 3637
     }
   ],
   "lines": [
     {
-      "id": 72,
+      "id": 92,
       "layer": "power",
-      "x1": 3400,
-      "y1": 2500,
-      "x2": 1900,
-      "y2": 1400,
+      "x1": 4359,
+      "y1": -1954,
+      "x2": 3636,
+      "y2": 1538,
       "lineType": "power"
     },
     {
-      "id": 73,
+      "id": 93,
       "layer": "power",
-      "x1": 3400,
-      "y1": 4400,
-      "x2": 1900,
-      "y2": 3700,
-      "lineType": "power"
-    },
-    {
-      "id": 74,
-      "layer": "power",
-      "x1": 3400,
-      "y1": 5300,
-      "x2": 1900,
-      "y2": 6000,
-      "lineType": "power"
-    },
-    {
-      "id": 75,
-      "layer": "power",
-      "x1": 6200,
-      "y1": 2200,
-      "x2": 5000,
-      "y2": 1200,
-      "lineType": "power"
-    },
-    {
-      "id": 76,
-      "layer": "power",
-      "x1": 6800,
-      "y1": 2800,
-      "x2": 5200,
-      "y2": 3400,
-      "lineType": "power"
-    },
-    {
-      "id": 77,
-      "layer": "power",
-      "x1": 8400,
-      "y1": 2800,
-      "x2": 10800,
-      "y2": 1800,
-      "lineType": "power"
-    },
-    {
-      "id": 78,
-      "layer": "power",
-      "x1": 7400,
-      "y1": 4200,
-      "x2": 9800,
-      "y2": 5600,
+      "x1": 4322,
+      "y1": 239,
+      "x2": 3636,
+      "y2": 1538,
       "lineType": "power"
     }
   ]
