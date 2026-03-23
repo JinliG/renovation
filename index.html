@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>水电线路标注编辑器</title>
+<style>
+:root {
+  --c-bg: #16162a; --c-surface: rgba(22,22,42,0.96); --c-border: #333;
+  --c-power: #ff4444; --c-power2: #ff6666; --c-light: #ffaa44;
+  --c-weak: #4488ff; --c-water: #44cc88; --c-label: #ffaa00;
+  --c-text: #ddd; --c-muted: #888; --c-accent: #7c5cfc;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--c-bg); color:var(--c-text); font-family:-apple-system,'PingFang SC',sans-serif; overflow:hidden; height:100vh; user-select:none; }
+
+/* ---- TOOLBAR ---- */
+#toolbar {
+  position:fixed; top:0; left:0; right:0; z-index:100; height:46px;
+  background:var(--c-surface); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--c-border);
+  display:flex; align-items:center; padding:0 12px; gap:6px;
+}
+#toolbar h1 { font-size:14px; font-weight:700; margin-right:8px; white-space:nowrap; }
+.sep { width:1px; height:22px; background:var(--c-border); margin:0 4px; }
+.tb-btn {
+  background:#2a2a44; color:#bbb; border:1px solid #444; padding:3px 10px;
+  border-radius:4px; cursor:pointer; font-size:12px; white-space:nowrap;
+  transition: all .15s;
+}
+.tb-btn:hover { background:#3a3a55; color:#fff; }
+.tb-btn.active { background:var(--c-accent); color:#fff; border-color:var(--c-accent); }
+.tb-btn.danger { border-color:#a33; }
+.tb-btn.danger:hover { background:#a33; color:#fff; }
+.layer-cb { display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; }
+.layer-cb input { cursor:pointer; }
+.ldot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+#zoom-info { font-size:11px; color:var(--c-muted); min-width:36px; text-align:center; }
+#mode-hint { font-size:11px; color:var(--c-accent); margin-left:4px; }
+
+/* ---- LEFT PALETTE ---- */
+#palette {
+  position:fixed; top:46px; left:0; width:180px; bottom:0; z-index:90;
+  background:var(--c-surface); border-right:1px solid var(--c-border);
+  overflow-y:auto; padding:8px 0;
+  transition: transform .2s;
+}
+#palette.hidden { transform:translateX(-180px); }
+#palette h3 { font-size:11px; color:var(--c-muted); padding:6px 12px 2px; text-transform:uppercase; letter-spacing:1px; }
+.pal-item {
+  display:flex; align-items:center; gap:8px; padding:5px 12px; cursor:pointer;
+  font-size:12px; transition: background .1s;
+}
+.pal-item:hover { background:rgba(255,255,255,0.05); }
+.pal-item.selected { background:rgba(124,92,252,0.2); color:#fff; }
+.pal-icon { width:22px; text-align:center; font-size:14px; flex-shrink:0; }
+
+/* ---- RIGHT PANEL (properties) ---- */
+#props {
+  position:fixed; top:46px; right:0; width:240px; bottom:0; z-index:90;
+  background:var(--c-surface); border-left:1px solid var(--c-border);
+  padding:12px; overflow-y:auto;
+  transition: transform .2s;
+}
+#props.hidden { transform:translateX(240px); }
+#props h3 { font-size:13px; margin-bottom:10px; }
+#props label { display:block; font-size:11px; color:var(--c-muted); margin:8px 0 3px; }
+#props input, #props select {
+  width:100%; background:#222; color:#eee; border:1px solid #444;
+  padding:5px 8px; border-radius:4px; font-size:12px;
+}
+#props .coord-row { display:flex; gap:8px; }
+#props .coord-row > div { flex:1; }
+#no-selection { color:var(--c-muted); font-size:12px; padding:20px 0; text-align:center; }
+
+/* ---- CANVAS ---- */
+#canvas-area {
+  position:absolute; top:46px; left:180px; right:240px; bottom:0;
+  overflow:hidden; cursor:grab; background: #111;
+}
+#canvas-area.mode-add { cursor:crosshair; }
+#canvas-area.mode-calibrate { cursor:crosshair; }
+#canvas-area.dragging-point { cursor:grabbing; }
+#canvas-area.panning { cursor:grabbing; }
+
+#drawing-container { position:absolute; transform-origin:0 0; }
+#drawing-container img { display:block; max-width:none; }
+#overlay { position:absolute; top:0; left:0; width:100%; height:100%; }
+
+/* ---- TOOLTIP ---- */
+#tooltip {
+  position:fixed; z-index:200; background:rgba(0,0,0,0.88); color:#fff;
+  padding:5px 10px; border-radius:5px; font-size:11px; pointer-events:none;
+  display:none; max-width:220px; border:1px solid #555;
+}
+
+/* ---- STATS BAR ---- */
+#statsbar {
+  position:fixed; bottom:0; left:180px; right:240px; z-index:90; height:28px;
+  background:var(--c-surface); border-top:1px solid var(--c-border);
+  display:flex; align-items:center; padding:0 14px; gap:16px; font-size:11px; color:var(--c-muted);
+}
+.stat-item span { color:var(--c-label); font-weight:600; }
+
+/* ---- CALIBRATION OVERLAY ---- */
+#calib-overlay {
+  position:fixed; top:0; left:0; right:0; bottom:0; z-index:300;
+  background:rgba(0,0,0,0.6); display:none;
+  justify-content:center; align-items:center;
+}
+#calib-overlay.show { display:flex; }
+#calib-box {
+  background:#1e1e36; border:1px solid var(--c-accent); border-radius:10px;
+  padding:24px 32px; max-width:400px; text-align:center;
+}
+#calib-box h2 { font-size:16px; margin-bottom:10px; }
+#calib-box p { font-size:13px; color:var(--c-muted); line-height:1.6; }
+#calib-step { color:var(--c-accent); font-weight:600; font-size:14px; margin:10px 0; }
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <h1>水电标注编辑器</h1>
+  <div class="sep"></div>
+  <button class="tb-btn active" data-mode="select" onclick="setMode('select')">选择/移动</button>
+  <button class="tb-btn" data-mode="add" onclick="setMode('add')">添加点位</button>
+  <button class="tb-btn" data-mode="line" onclick="setMode('line')">画连线</button>
+  <button class="tb-btn danger" onclick="deleteSelected()">删除 (Del)</button>
+  <div class="sep"></div>
+  <label class="layer-cb"><input type="checkbox" checked data-layer="power"><span class="ldot" style="background:var(--c-power)"></span>强电</label>
+  <label class="layer-cb"><input type="checkbox" checked data-layer="weak"><span class="ldot" style="background:var(--c-weak)"></span>弱电</label>
+  <label class="layer-cb"><input type="checkbox" checked data-layer="water"><span class="ldot" style="background:var(--c-water)"></span>水路</label>
+  <label class="layer-cb"><input type="checkbox" checked data-layer="labels"><span class="ldot" style="background:var(--c-label)"></span>标注</label>
+  <div class="sep"></div>
+  <button class="tb-btn" onclick="startCalibration()">校准</button>
+  <button class="tb-btn" onclick="fitView()">适应</button>
+  <span id="zoom-info">100%</span>
+  <div class="sep"></div>
+  <button class="tb-btn" onclick="saveJSON()" style="background:#234">💾 保存</button>
+  <button class="tb-btn" onclick="importJSON()">导入</button>
+  <span id="mode-hint"></span>
+</div>
+
+<!-- LEFT PALETTE -->
+<div id="palette">
+  <h3 style="color:var(--c-power)">强电</h3>
+  <div class="pal-item" data-add-type="outlet5" data-add-layer="power"><span class="pal-icon" style="color:var(--c-power)">⊞</span>五孔插座 10A</div>
+  <div class="pal-item" data-add-type="outlet16" data-add-layer="power"><span class="pal-icon" style="color:var(--c-power2)">⊞</span>专用插座 16A</div>
+  <div class="pal-item" data-add-type="switch1" data-add-layer="power"><span class="pal-icon" style="color:var(--c-power)">○─</span>单控开关</div>
+  <div class="pal-item" data-add-type="switch2" data-add-layer="power"><span class="pal-icon" style="color:var(--c-power)">○═○</span>双控开关</div>
+  <div class="pal-item" data-add-type="ceiling" data-add-layer="power"><span class="pal-icon" style="color:var(--c-light)">✱</span>吸顶灯</div>
+  <div class="pal-item" data-add-type="downlight" data-add-layer="power"><span class="pal-icon" style="color:var(--c-light)">◎</span>筒灯</div>
+  <div class="pal-item" data-add-type="strip" data-add-layer="power"><span class="pal-icon" style="color:var(--c-light)">━</span>灯带</div>
+  <div class="pal-item" data-add-type="panel" data-add-layer="power"><span class="pal-icon" style="color:var(--c-power)">▣</span>配电箱</div>
+
+  <h3 style="color:var(--c-weak)">弱电</h3>
+  <div class="pal-item" data-add-type="network" data-add-layer="weak"><span class="pal-icon" style="color:var(--c-weak)">⊞</span>网线面板</div>
+  <div class="pal-item" data-add-type="weakpanel" data-add-layer="weak"><span class="pal-icon" style="color:var(--c-weak)">▣</span>弱电箱</div>
+  <div class="pal-item" data-add-type="wifi" data-add-layer="weak"><span class="pal-icon" style="color:#66aaff">◉</span>WiFi AP</div>
+  <div class="pal-item" data-add-type="tv" data-add-layer="weak"><span class="pal-icon" style="color:var(--c-weak)">TV</span>电视面板</div>
+
+  <h3 style="color:var(--c-water)">水路</h3>
+  <div class="pal-item" data-add-type="hotcold" data-add-layer="water"><span class="pal-icon"><span style="color:#f66">●</span><span style="color:#48f">●</span></span>冷热水口</div>
+  <div class="pal-item" data-add-type="cold" data-add-layer="water"><span class="pal-icon" style="color:var(--c-weak)">●</span>冷水口</div>
+  <div class="pal-item" data-add-type="floor_drain" data-add-layer="water"><span class="pal-icon" style="color:var(--c-water)">◉</span>地漏</div>
+  <div class="pal-item" data-add-type="drain" data-add-layer="water"><span class="pal-icon" style="color:#888">D</span>排水口</div>
+  <div class="pal-item" data-add-type="valve" data-add-layer="water"><span class="pal-icon" style="color:var(--c-water)">▽</span>阀门</div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="props">
+  <h3>属性</h3>
+  <div id="no-selection">点击点位以编辑属性<br><br>
+    <span style="font-size:11px;color:#666">
+      快捷键：<br>
+      Del — 删除选中<br>
+      Esc — 取消选择<br>
+      S — 选择模式<br>
+      A — 添加模式<br>
+      L — 画线模式<br>
+      Ctrl+Z — 撤销<br>
+      Ctrl+S — 导出
+    </span>
+  </div>
+  <div id="prop-fields" style="display:none">
+    <label>类型</label>
+    <select id="prop-type" onchange="updateProp('type', this.value)"></select>
+    <label>标注</label>
+    <input id="prop-label" oninput="updateProp('label', this.value)" placeholder="描述...">
+    <label>房间</label>
+    <input id="prop-room" oninput="updateProp('room', this.value)" placeholder="房间名...">
+    <label>坐标 (mm)</label>
+    <div class="coord-row">
+      <div><input id="prop-x" type="number" oninput="updateProp('x', +this.value)" placeholder="X"></div>
+      <div><input id="prop-y" type="number" oninput="updateProp('y', +this.value)" placeholder="Y"></div>
+    </div>
+    <label>图层</label>
+    <select id="prop-layer" onchange="updateProp('layer', this.value)">
+      <option value="power">强电</option>
+      <option value="weak">弱电</option>
+      <option value="water">水路</option>
+    </select>
+    <br><br>
+    <button class="tb-btn" style="width:100%" onclick="duplicateSelected()">复制点位</button>
+    <button class="tb-btn danger" style="width:100%;margin-top:6px" onclick="deleteSelected()">删除点位</button>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div id="tooltip"></div>
+
+<!-- CANVAS -->
+<div id="canvas-area">
+  <div id="drawing-container">
+    <img id="floorplan-img" src="floorplan.png" alt="平面图">
+    <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div id="statsbar">
+  <span class="stat-item">插座 <span id="s-outlet">0</span></span>
+  <span class="stat-item">开关 <span id="s-switch">0</span></span>
+  <span class="stat-item">灯具 <span id="s-light">0</span></span>
+  <span class="stat-item">弱电 <span id="s-weak">0</span></span>
+  <span class="stat-item">水路 <span id="s-water">0</span></span>
+  <span class="stat-item">连线 <span id="s-lines">0</span></span>
+  <span style="flex:1"></span>
+  <span id="mouse-coords" style="color:#555">—</span>
+</div>
+
+<!-- CALIBRATION OVERLAY -->
+<div id="calib-overlay">
+  <div id="calib-box">
+    <h2>校准坐标</h2>
+    <p>请依次点击平面图上的<b>两个已知角点</b>来校准坐标映射。</p>
+    <div id="calib-step">第 1 步：点击外墙 <b>左上角</b></div>
+    <br>
+    <button class="tb-btn" onclick="cancelCalibration()">取消</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let nextId = 1;
+const FP_W = 13360, FP_H = 7640;
+
+const state = {
+  calibration: { left: 0.032, top: 0.068, right: 0.975, bottom: 0.925 },
+  points: [],
+  lines: [],  // { id, layer, x1, y1, x2, y2, lineType:'power'|'hot'|'cold'|'drain' }
+};
+
+let mode = 'select';       // 'select' | 'add' | 'line' | 'calibrate'
+let addType = 'outlet5';
+let addLayer = 'power';
+let selectedId = null;
+let lineStart = null;       // point id for line drawing
+let undoStack = [];
+
+// DOM refs
+const img = document.getElementById('floorplan-img');
+const overlay = document.getElementById('overlay');
+const container = document.getElementById('drawing-container');
+const canvasArea = document.getElementById('canvas-area');
+const tooltip = document.getElementById('tooltip');
+
+let imgW, imgH;
+let scale = 1, panX = 0, panY = 0;
+
+// ============================================================
+// TYPE DEFINITIONS
+// ============================================================
+const TYPE_INFO = {
+  outlet5:     { name: '五孔插座 10A', layer: 'power' },
+  outlet16:    { name: '专用插座 16A', layer: 'power' },
+  switch1:     { name: '单控开关', layer: 'power' },
+  switch2:     { name: '双控开关', layer: 'power' },
+  ceiling:     { name: '吸顶灯', layer: 'power' },
+  downlight:   { name: '筒灯', layer: 'power' },
+  strip:       { name: '灯带', layer: 'power' },
+  panel:       { name: '配电箱', layer: 'power' },
+  network:     { name: '网线面板', layer: 'weak' },
+  weakpanel:   { name: '弱电箱', layer: 'weak' },
+  wifi:        { name: 'WiFi AP', layer: 'weak' },
+  tv:          { name: '电视面板', layer: 'weak' },
+  hotcold:     { name: '冷热水口', layer: 'water' },
+  cold:        { name: '冷水口', layer: 'water' },
+  floor_drain: { name: '地漏', layer: 'water' },
+  drain:       { name: '排水口', layer: 'water' },
+  valve:       { name: '阀门', layer: 'water' },
+};
+
+const LINE_TYPES = {
+  power: { color: '#ffaa44', dash: '4,4', name: '电路' },
+  hot:   { color: '#ff6666', dash: null, name: '热水管' },
+  cold:  { color: '#4488ff', dash: null, name: '冷水管' },
+  drain: { color: '#888', dash: '5,3', name: '排水管' },
+};
+
+// ============================================================
+// COORDINATE TRANSFORMS
+// ============================================================
+function mmToPx(mmX, mmY) {
+  const c = state.calibration;
+  const fpL = c.left * imgW, fpT = c.top * imgH;
+  const fpW = (c.right - c.left) * imgW, fpH = (c.bottom - c.top) * imgH;
+  return { x: fpL + (mmX / FP_W) * fpW, y: fpT + (mmY / FP_H) * fpH };
+}
+
+function pxToMm(px, py) {
+  const c = state.calibration;
+  const fpL = c.left * imgW, fpT = c.top * imgH;
+  const fpW = (c.right - c.left) * imgW, fpH = (c.bottom - c.top) * imgH;
+  return { x: Math.round(((px - fpL) / fpW) * FP_W), y: Math.round(((py - fpT) / fpH) * FP_H) };
+}
+
+function screenToImg(sx, sy) {
+  const rect = canvasArea.getBoundingClientRect();
+  return { x: (sx - rect.left - panX) / scale, y: (sy - rect.top - panY) / scale };
+}
+
+// ============================================================
+// UNDO
+// ============================================================
+function saveUndo() {
+  undoStack.push(JSON.stringify({ points: state.points, lines: state.lines }));
+  if (undoStack.length > 50) undoStack.shift();
+}
+
+function undo() {
+  if (!undoStack.length) return;
+  const snap = JSON.parse(undoStack.pop());
+  state.points = snap.points;
+  state.lines = snap.lines;
+  selectedId = null;
+  render();
+  updateProps();
+  autoSave();
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+function render() {
+  overlay.innerHTML = '';
+  if (!imgW) return;
+  overlay.setAttribute('viewBox', `0 0 ${imgW} ${imgH}`);
+  overlay.setAttribute('width', imgW);
+  overlay.setAttribute('height', imgH);
+
+  const groups = {
+    power: makeSvgG('layer-power'),
+    weak:  makeSvgG('layer-weak'),
+    water: makeSvgG('layer-water'),
+    labels: makeSvgG('layer-labels'),
+  };
+
+  // Draw lines
+  state.lines.forEach(ln => {
+    const g = groups[ln.layer] || groups.power;
+    const lt = LINE_TYPES[ln.lineType] || LINE_TYPES.power;
+    const p1 = mmToPx(ln.x1, ln.y1), p2 = mmToPx(ln.x2, ln.y2);
+    const el = svgLine(p1.x, p1.y, p2.x, p2.y, lt.color, 2, lt.dash);
+    el.setAttribute('opacity', '0.6');
+    el.dataset.lineId = ln.id;
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', (e) => { e.stopPropagation(); selectLine(ln.id); });
+    g.appendChild(el);
+  });
+
+  // Draw points
+  state.points.forEach(pt => {
+    const g = groups[pt.layer] || groups.power;
+    const sym = buildSymbol(pt);
+    g.appendChild(sym);
+  });
+
+  // Room labels — derive from points
+  const rooms = {};
+  state.points.forEach(pt => {
+    if (pt.room && !rooms[pt.room]) rooms[pt.room] = { sx: 0, sy: 0, n: 0 };
+    if (pt.room) { rooms[pt.room].sx += pt.x; rooms[pt.room].sy += pt.y; rooms[pt.room].n++; }
+  });
+
+  Object.keys(groups).forEach(k => overlay.appendChild(groups[k]));
+
+  // Apply layer visibility
+  document.querySelectorAll('[data-layer]').forEach(cb => {
+    const layer = document.getElementById('layer-' + cb.dataset.layer);
+    if (layer) layer.style.display = cb.checked ? '' : 'none';
+  });
+
+  updateStats();
+}
+
+function makeSvgG(id) {
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.id = id;
+  return g;
+}
+
+function buildSymbol(pt) {
+  const p = mmToPx(pt.x, pt.y);
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('transform', `translate(${p.x},${p.y})`);
+  g.dataset.pointId = pt.id;
+  g.style.cursor = 'pointer';
+
+  const isSelected = pt.id === selectedId;
+  const sz = Math.min(imgW, imgH) * 0.012;
+
+  // Hit area (invisible larger circle for easier clicking)
+  const hit = svgCircle(0, 0, sz * 0.8, 'transparent', 'transparent', 0);
+  g.appendChild(hit);
+
+  // Selection ring
+  if (isSelected) {
+    const ring = svgCircle(0, 0, sz * 0.9, 'none', '#7c5cfc', 2.5);
+    ring.setAttribute('stroke-dasharray', '3,2');
+    g.appendChild(ring);
+  }
+
+  // Draw type-specific symbol
+  drawTypeSymbol(g, pt.type, sz, isSelected);
+
+  // Label text
+  if (pt.label) {
+    const t = svgText(pt.label, 0, sz * 0.7 + 12, layerColor(pt.layer, 0.8), 9);
+    g.appendChild(t);
+  }
+
+  // Events
+  g.addEventListener('mouseenter', (e) => {
+    showTooltip(e, `${pt.room ? pt.room + ' — ' : ''}${pt.label || TYPE_INFO[pt.type]?.name || pt.type}`);
+  });
+  g.addEventListener('mouseleave', hideTooltip);
+  g.addEventListener('mousedown', (e) => onPointMouseDown(e, pt.id));
+
+  return g;
+}
+
+function drawTypeSymbol(g, type, sz, selected) {
+  switch (type) {
+    case 'outlet5': {
+      g.appendChild(svgRect(-sz/2, -sz/2, sz, sz, 2, 'none', '#ff4444', 2));
+      g.appendChild(svgLine(-sz/2, 0, sz/2, 0, '#ff4444', 1.5));
+      g.appendChild(svgLine(0, -sz/2, 0, sz/2, '#ff4444', 1.5));
+      break;
+    }
+    case 'outlet16': {
+      g.appendChild(svgRect(-sz/2, -sz/2, sz, sz, 2, 'rgba(255,100,100,0.15)', '#ff6666', 2.5));
+      g.appendChild(svgLine(-sz/2, 0, sz/2, 0, '#ff6666', 2));
+      g.appendChild(svgLine(0, -sz/2, 0, sz/2, '#ff6666', 2));
+      g.appendChild(svgText('16A', 0, -sz/2 - 3, '#ff6666', 8));
+      break;
+    }
+    case 'switch1': {
+      g.appendChild(svgCircle(0, 0, sz * 0.35, 'none', '#ff4444', 2));
+      g.appendChild(svgLine(sz * 0.35, 0, sz, 0, '#ff4444', 2));
+      break;
+    }
+    case 'switch2': {
+      g.appendChild(svgCircle(-sz * 0.5, 0, sz * 0.3, 'none', '#ff4444', 2));
+      g.appendChild(svgCircle(sz * 0.5, 0, sz * 0.3, 'none', '#ff4444', 2));
+      g.appendChild(svgLine(-sz * 0.2, 0, sz * 0.2, 0, '#ff4444', 2.5));
+      break;
+    }
+    case 'ceiling': {
+      for (let i = 0; i < 6; i++) {
+        const a = i * 60 * Math.PI / 180;
+        g.appendChild(svgLine(0, 0, Math.cos(a) * sz * 0.5, Math.sin(a) * sz * 0.5, '#ffaa44', 2));
+      }
+      g.appendChild(svgCircle(0, 0, 3, '#ffaa44', '#ffaa44', 0));
+      break;
+    }
+    case 'downlight': {
+      g.appendChild(svgCircle(0, 0, sz * 0.3, 'none', '#ffaa44', 1.5));
+      g.appendChild(svgCircle(0, 0, sz * 0.12, '#ffaa44', '#ffaa44', 0));
+      break;
+    }
+    case 'strip': {
+      g.appendChild(svgLine(-sz * 0.7, 0, sz * 0.7, 0, '#ffaa44', 3));
+      break;
+    }
+    case 'panel': {
+      g.appendChild(svgRect(-sz * 0.6, -sz * 0.4, sz * 1.2, sz * 0.8, 3, 'rgba(255,68,68,0.2)', '#ff4444', 2.5));
+      g.appendChild(svgText('配电', 0, 4, '#ff4444', 9));
+      break;
+    }
+    case 'weakpanel': {
+      g.appendChild(svgRect(-sz * 0.6, -sz * 0.4, sz * 1.2, sz * 0.8, 3, 'rgba(68,136,255,0.2)', '#4488ff', 2.5));
+      g.appendChild(svgText('弱电', 0, 4, '#4488ff', 9));
+      break;
+    }
+    case 'network': {
+      g.appendChild(svgRect(-sz/2, -sz/2, sz, sz, 2, 'none', '#4488ff', 2));
+      g.appendChild(svgText('N', 0, 4, '#4488ff', 11));
+      break;
+    }
+    case 'wifi': {
+      g.appendChild(svgCircle(0, 0, sz * 0.4, 'none', '#66aaff', 1.5));
+      g.appendChild(svgCircle(0, 0, sz * 0.25, 'none', '#66aaff', 1.5));
+      g.appendChild(svgCircle(0, 0, 3, '#66aaff', '#66aaff', 0));
+      break;
+    }
+    case 'tv': {
+      g.appendChild(svgRect(-sz/2, -sz * 0.35, sz, sz * 0.7, 2, 'none', '#4488ff', 2));
+      g.appendChild(svgText('TV', 0, 4, '#4488ff', 9));
+      break;
+    }
+    case 'hotcold': {
+      g.appendChild(svgCircle(-6, 0, sz * 0.25, 'none', '#ff6666', 2));
+      g.appendChild(svgCircle(6, 0, sz * 0.25, 'none', '#4488ff', 2));
+      break;
+    }
+    case 'cold': {
+      g.appendChild(svgCircle(0, 0, sz * 0.3, 'none', '#4488ff', 2));
+      break;
+    }
+    case 'floor_drain': {
+      g.appendChild(svgCircle(0, 0, sz * 0.35, 'none', '#44cc88', 2));
+      g.appendChild(svgLine(-sz * 0.2, -sz * 0.2, sz * 0.2, sz * 0.2, '#44cc88', 1.5));
+      g.appendChild(svgLine(sz * 0.2, -sz * 0.2, -sz * 0.2, sz * 0.2, '#44cc88', 1.5));
+      break;
+    }
+    case 'drain': {
+      g.appendChild(svgCircle(0, 0, sz * 0.25, 'none', '#888', 1.5));
+      g.appendChild(svgText('D', 0, 4, '#888', 9));
+      break;
+    }
+    case 'valve': {
+      const s = sz * 0.35;
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      poly.setAttribute('points', `0,${-s} ${s},${s} ${-s},${s}`);
+      poly.setAttribute('fill', 'none');
+      poly.setAttribute('stroke', '#44cc88');
+      poly.setAttribute('stroke-width', 2);
+      g.appendChild(poly);
+      break;
+    }
+  }
+}
+
+function layerColor(layer, alpha) {
+  const colors = { power: '#ff4444', weak: '#4488ff', water: '#44cc88' };
+  return colors[layer] || '#888';
+}
+
+// ============================================================
+// SVG HELPERS
+// ============================================================
+function svgLine(x1, y1, x2, y2, stroke, w, dash) {
+  const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  l.setAttribute('x1', x1); l.setAttribute('y1', y1);
+  l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+  l.setAttribute('stroke', stroke); l.setAttribute('stroke-width', w);
+  if (dash) l.setAttribute('stroke-dasharray', dash);
+  return l;
+}
+function svgCircle(cx, cy, r, fill, stroke, sw) {
+  const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+  c.setAttribute('fill', fill || 'none');
+  c.setAttribute('stroke', stroke); c.setAttribute('stroke-width', sw);
+  return c;
+}
+function svgRect(x, y, w, h, rx, fill, stroke, sw) {
+  const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  r.setAttribute('x', x); r.setAttribute('y', y);
+  r.setAttribute('width', w); r.setAttribute('height', h);
+  r.setAttribute('rx', rx);
+  r.setAttribute('fill', fill || 'none');
+  r.setAttribute('stroke', stroke); r.setAttribute('stroke-width', sw);
+  return r;
+}
+function svgText(content, x, y, fill, size) {
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  t.setAttribute('x', x); t.setAttribute('y', y);
+  t.setAttribute('fill', fill); t.setAttribute('font-size', size);
+  t.setAttribute('text-anchor', 'middle');
+  t.setAttribute('font-family', 'PingFang SC,sans-serif');
+  t.textContent = content;
+  return t;
+}
+
+// ============================================================
+// MODE
+// ============================================================
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('#toolbar [data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  canvasArea.className = m === 'add' ? 'mode-add' : m === 'calibrate' ? 'mode-calibrate' : '';
+
+  const hints = { select: '', add: '点击画布放置点位', line: '依次点击两个点位画连线', calibrate: '校准模式' };
+  document.getElementById('mode-hint').textContent = hints[m] || '';
+
+  if (m === 'add') {
+    // Highlight palette
+  } else {
+    lineStart = null;
+  }
+}
+
+// ============================================================
+// PALETTE
+// ============================================================
+document.querySelectorAll('.pal-item').forEach(item => {
+  item.addEventListener('click', () => {
+    addType = item.dataset.addType;
+    addLayer = item.dataset.addLayer;
+    document.querySelectorAll('.pal-item').forEach(i => i.classList.remove('selected'));
+    item.classList.add('selected');
+    setMode('add');
+  });
+});
+// Select first palette item
+document.querySelector('.pal-item')?.classList.add('selected');
+
+// ============================================================
+// INTERACTION: POINT MOUSE DOWN
+// ============================================================
+let draggingPt = null, dragOffsetX = 0, dragOffsetY = 0, didDrag = false;
+
+function onPointMouseDown(e, id) {
+  e.stopPropagation();
+  if (mode === 'line') {
+    if (!lineStart) {
+      lineStart = id;
+      document.getElementById('mode-hint').textContent = '已选起点，点击终点完成连线';
+    } else if (lineStart !== id) {
+      // Create line
+      const p1 = state.points.find(p => p.id === lineStart);
+      const p2 = state.points.find(p => p.id === id);
+      if (p1 && p2) {
+        saveUndo();
+        const lt = guessLineType(p1, p2);
+        state.lines.push({ id: nextId++, layer: p1.layer, x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, lineType: lt });
+        render();
+        autoSave();
+      }
+      lineStart = null;
+      document.getElementById('mode-hint').textContent = '依次点击两个点位画连线';
+    }
+    return;
+  }
+
+  selectPoint(id);
+
+  if (mode === 'select') {
+    draggingPt = id;
+    didDrag = false;
+    const pt = state.points.find(p => p.id === id);
+    if (pt) {
+      const pp = mmToPx(pt.x, pt.y);
+      const ip = screenToImg(e.clientX, e.clientY);
+      dragOffsetX = ip.x - pp.x;
+      dragOffsetY = ip.y - pp.y;
+    }
+    canvasArea.classList.add('dragging-point');
+  }
+}
+
+function guessLineType(p1, p2) {
+  if (p1.layer === 'water' || p2.layer === 'water') {
+    if (p1.type === 'drain' || p2.type === 'drain' || p1.type === 'floor_drain' || p2.type === 'floor_drain') return 'drain';
+    if (p1.type === 'cold' || p2.type === 'cold') return 'cold';
+    return 'hot';
+  }
+  return 'power';
+}
+
+// ============================================================
+// INTERACTION: CANVAS MOUSE
+// ============================================================
+let isPanning = false, panStartX, panStartY;
+
+canvasArea.addEventListener('mousedown', (e) => {
+  if (e.target.closest('[data-point-id]')) return; // handled by point
+  if (e.target.closest('[data-line-id]')) return;
+  if (e.button !== 0) return;
+
+  if (mode === 'add') {
+    // Place new point
+    const ip = screenToImg(e.clientX, e.clientY);
+    const mm = pxToMm(ip.x, ip.y);
+    saveUndo();
+    const pt = { id: nextId++, layer: addLayer, type: addType, x: mm.x, y: mm.y, label: TYPE_INFO[addType]?.name || '', room: '' };
+    state.points.push(pt);
+    selectedId = pt.id;
+    render();
+    updateProps();
+    autoSave();
+    return;
+  }
+
+  if (mode === 'calibrate') return; // handled separately
+
+  // Deselect
+  if (mode === 'select' && !e.target.closest('[data-point-id]')) {
+    selectedId = null;
+    updateProps();
+    render();
+  }
+
+  // Start panning
+  isPanning = true;
+  panStartX = e.clientX - panX;
+  panStartY = e.clientY - panY;
+  canvasArea.classList.add('panning');
+});
+
+document.addEventListener('mousemove', (e) => {
+  // Dragging a point
+  if (draggingPt) {
+    const ip = screenToImg(e.clientX, e.clientY);
+    const mm = pxToMm(ip.x - dragOffsetX, ip.y - dragOffsetY);
+    const pt = state.points.find(p => p.id === draggingPt);
+    if (pt) {
+      pt.x = mm.x; pt.y = mm.y;
+      didDrag = true;
+      // Update connected lines
+      state.lines.forEach(ln => {
+        if (ln.x1 === pt._prevX && ln.y1 === pt._prevY) { ln.x1 = pt.x; ln.y1 = pt.y; }
+        if (ln.x2 === pt._prevX && ln.y2 === pt._prevY) { ln.x2 = pt.x; ln.y2 = pt.y; }
+      });
+      render();
+      updateProps();
+    }
+    return;
+  }
+
+  // Panning
+  if (isPanning) {
+    panX = e.clientX - panStartX;
+    panY = e.clientY - panStartY;
+    updateTransform();
+    return;
+  }
+
+  // Update mouse coords display
+  const ip = screenToImg(e.clientX, e.clientY);
+  if (imgW) {
+    const mm = pxToMm(ip.x, ip.y);
+    document.getElementById('mouse-coords').textContent = `X:${mm.x} Y:${mm.y} mm`;
+  }
+
+  // Tooltip follow
+  if (tooltip.style.display === 'block') {
+    tooltip.style.left = (e.clientX + 14) + 'px';
+    tooltip.style.top = (e.clientY - 6) + 'px';
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (draggingPt && didDrag) {
+    saveUndo();
+    autoSave();
+  }
+  draggingPt = null;
+  isPanning = false;
+  canvasArea.classList.remove('dragging-point', 'panning');
+});
+
+// Zoom
+canvasArea.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const rect = canvasArea.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const oldScale = scale;
+  scale = Math.max(0.1, Math.min(10, scale * (e.deltaY > 0 ? 0.9 : 1.1)));
+  panX = mx - (mx - panX) * (scale / oldScale);
+  panY = my - (my - panY) * (scale / oldScale);
+  updateTransform();
+}, { passive: false });
+
+function updateTransform() {
+  container.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+  document.getElementById('zoom-info').textContent = Math.round(scale * 100) + '%';
+}
+
+function fitView() {
+  if (!imgW) return;
+  const areaW = canvasArea.clientWidth, areaH = canvasArea.clientHeight;
+  scale = Math.min(areaW / imgW, areaH / imgH) * 0.95;
+  panX = (areaW - imgW * scale) / 2;
+  panY = (areaH - imgH * scale) / 2;
+  updateTransform();
+}
+
+// ============================================================
+// SELECTION & PROPERTIES
+// ============================================================
+function selectPoint(id) {
+  selectedId = id;
+  // Store prev position for line tracking
+  const pt = state.points.find(p => p.id === id);
+  if (pt) { pt._prevX = pt.x; pt._prevY = pt.y; }
+  updateProps();
+  render();
+}
+
+function selectLine(id) {
+  // For now just allow deleting lines via selection
+  selectedId = 'line_' + id;
+  updateProps();
+  render();
+}
+
+function updateProps() {
+  const fields = document.getElementById('prop-fields');
+  const noSel = document.getElementById('no-selection');
+
+  if (typeof selectedId === 'string' && selectedId.startsWith('line_')) {
+    fields.style.display = 'none';
+    noSel.style.display = 'block';
+    noSel.innerHTML = '已选中连线<br><br><button class="tb-btn danger" onclick="deleteSelected()">删除连线</button>';
+    return;
+  }
+
+  const pt = state.points.find(p => p.id === selectedId);
+  if (!pt) {
+    fields.style.display = 'none';
+    noSel.style.display = 'block';
+    noSel.innerHTML = '点击点位以编辑属性<br><br><span style="font-size:11px;color:#666">快捷键：<br>Del — 删除选中<br>Esc — 取消选择<br>S — 选择模式<br>A — 添加模式<br>L — 画线模式<br>Ctrl+Z — 撤销<br>Ctrl+S — 导出</span>';
+    return;
+  }
+
+  fields.style.display = 'block';
+  noSel.style.display = 'none';
+
+  // Populate type select
+  const sel = document.getElementById('prop-type');
+  sel.innerHTML = '';
+  Object.entries(TYPE_INFO).forEach(([k, v]) => {
+    const opt = document.createElement('option');
+    opt.value = k; opt.textContent = v.name;
+    if (k === pt.type) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  document.getElementById('prop-label').value = pt.label || '';
+  document.getElementById('prop-room').value = pt.room || '';
+  document.getElementById('prop-x').value = pt.x;
+  document.getElementById('prop-y').value = pt.y;
+  document.getElementById('prop-layer').value = pt.layer;
+}
+
+function updateProp(key, value) {
+  const pt = state.points.find(p => p.id === selectedId);
+  if (!pt) return;
+  saveUndo();
+  pt[key] = value;
+  if (key === 'type' && TYPE_INFO[value]) {
+    pt.layer = TYPE_INFO[value].layer;
+    document.getElementById('prop-layer').value = pt.layer;
+  }
+  render();
+  autoSave();
+}
+
+function deleteSelected() {
+  if (typeof selectedId === 'string' && selectedId.startsWith('line_')) {
+    const lid = parseInt(selectedId.replace('line_', ''));
+    saveUndo();
+    state.lines = state.lines.filter(l => l.id !== lid);
+    selectedId = null;
+    render();
+    updateProps();
+    autoSave();
+    return;
+  }
+  const idx = state.points.findIndex(p => p.id === selectedId);
+  if (idx < 0) return;
+  saveUndo();
+  state.points.splice(idx, 1);
+  selectedId = null;
+  render();
+  updateProps();
+  autoSave();
+}
+
+function duplicateSelected() {
+  const pt = state.points.find(p => p.id === selectedId);
+  if (!pt) return;
+  saveUndo();
+  const npt = { ...pt, id: nextId++, x: pt.x + 200, y: pt.y + 200 };
+  delete npt._prevX; delete npt._prevY;
+  state.points.push(npt);
+  selectedId = npt.id;
+  render();
+  updateProps();
+  autoSave();
+}
+
+// ============================================================
+// LAYER TOGGLE
+// ============================================================
+document.querySelectorAll('[data-layer]').forEach(cb => {
+  cb.addEventListener('change', () => {
+    const layer = document.getElementById('layer-' + cb.dataset.layer);
+    if (layer) layer.style.display = cb.checked ? '' : 'none';
+  });
+});
+
+// ============================================================
+// CALIBRATION
+// ============================================================
+let calibStep = 0, calibPts = [];
+
+function startCalibration() {
+  calibStep = 1;
+  calibPts = [];
+  document.getElementById('calib-overlay').classList.add('show');
+  document.getElementById('calib-step').innerHTML = '第 1 步：点击外墙 <b>左上角</b>';
+  setMode('calibrate');
+
+  // Close overlay to let user click on canvas
+  setTimeout(() => {
+    document.getElementById('calib-overlay').classList.remove('show');
+  }, 2000);
+}
+
+function cancelCalibration() {
+  calibStep = 0;
+  document.getElementById('calib-overlay').classList.remove('show');
+  setMode('select');
+}
+
+canvasArea.addEventListener('click', (e) => {
+  if (mode !== 'calibrate' || calibStep === 0) return;
+
+  const ip = screenToImg(e.clientX, e.clientY);
+  calibPts.push({ x: ip.x / imgW, y: ip.y / imgH });
+
+  if (calibStep === 1) {
+    calibStep = 2;
+    document.getElementById('calib-overlay').classList.add('show');
+    document.getElementById('calib-step').innerHTML = '第 2 步：点击外墙 <b>右下角</b>';
+    setTimeout(() => document.getElementById('calib-overlay').classList.remove('show'), 2000);
+  } else {
+    // Done
+    state.calibration = {
+      left: calibPts[0].x, top: calibPts[0].y,
+      right: calibPts[1].x, bottom: calibPts[1].y
+    };
+    calibStep = 0;
+    setMode('select');
+    render();
+    autoSave();
+    document.getElementById('mode-hint').textContent = '校准完成！';
+    setTimeout(() => { document.getElementById('mode-hint').textContent = ''; }, 2000);
+  }
+});
+
+// ============================================================
+// TOOLTIP
+// ============================================================
+function showTooltip(e, text) {
+  tooltip.textContent = text;
+  tooltip.style.display = 'block';
+  tooltip.style.left = (e.clientX + 14) + 'px';
+  tooltip.style.top = (e.clientY - 6) + 'px';
+}
+function hideTooltip() { tooltip.style.display = 'none'; }
+
+// ============================================================
+// STATS
+// ============================================================
+function updateStats() {
+  const pts = state.points;
+  document.getElementById('s-outlet').textContent = pts.filter(p => p.type === 'outlet5' || p.type === 'outlet16').length;
+  document.getElementById('s-switch').textContent = pts.filter(p => p.type.startsWith('switch')).length;
+  document.getElementById('s-light').textContent = pts.filter(p => ['ceiling','downlight','strip'].includes(p.type)).length;
+  document.getElementById('s-weak').textContent = pts.filter(p => p.layer === 'weak').length;
+  document.getElementById('s-water').textContent = pts.filter(p => p.layer === 'water').length;
+  document.getElementById('s-lines').textContent = state.lines.length;
+}
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
+const STORAGE_KEY = 'renovation_editor_v1';
+const JSON_FILE = 'renovation_plan.json';
+let hasUnsaved = false;
+
+function autoSave() {
+  // Auto-save to localStorage as backup
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  markUnsaved(true);
+}
+
+function markUnsaved(v) {
+  hasUnsaved = v;
+  const btn = document.querySelector('[onclick="saveJSON()"]');
+  if (btn) btn.style.color = v ? '#ffaa00' : '';
+  document.title = (v ? '● ' : '') + '水电线路标注编辑器';
+}
+
+// Load from renovation_plan.json (fetch), fallback to localStorage
+async function loadFromFile() {
+  try {
+    const resp = await fetch(JSON_FILE + '?t=' + Date.now());
+    if (resp.ok) {
+      const data = await resp.json();
+      applyData(data);
+      return true;
+    }
+  } catch (e) {}
+  // Fallback: localStorage
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) { applyData(JSON.parse(data)); return true; }
+  } catch (e) {}
+  return false;
+}
+
+function applyData(data) {
+  state.calibration = data.calibration || state.calibration;
+  state.points = data.points || [];
+  state.lines = data.lines || [];
+  nextId = Math.max(1, ...state.points.map(p => p.id || 0), ...state.lines.map(l => l.id || 0)) + 1;
+}
+
+// Save: download as renovation_plan.json (browser will save to same dir if configured)
+function saveJSON() {
+  // Clean internal fields before saving
+  const exportState = JSON.parse(JSON.stringify(state));
+  exportState.points.forEach(p => { delete p._prevX; delete p._prevY; });
+
+  const blob = new Blob([JSON.stringify(exportState, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = JSON_FILE;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  markUnsaved(false);
+}
+
+function importJSON() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        saveUndo();
+        applyData(data);
+        selectedId = null;
+        render();
+        updateProps();
+        autoSave();
+      } catch (err) {
+        alert('JSON 解析失败: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteSelected(); }
+  else if (e.key === 'Escape') { selectedId = null; lineStart = null; updateProps(); render(); setMode('select'); }
+  else if (e.key === 's' && !e.metaKey && !e.ctrlKey) setMode('select');
+  else if (e.key === 'a' && !e.metaKey && !e.ctrlKey) setMode('add');
+  else if (e.key === 'l' && !e.metaKey && !e.ctrlKey) setMode('line');
+  else if (e.key === 'z' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); undo(); }
+  else if (e.key === 's' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveJSON(); }
+});
+
+// ============================================================
+// DEFAULT DATA (initial suggestion)
+// ============================================================
+function loadDefaults() {
+  const defaults = [
+    // 配电箱 & 弱电箱
+    { layer:'power', type:'panel', x:4900, y:5200, label:'配电箱', room:'入户' },
+    { layer:'weak', type:'weakpanel', x:4900, y:5400, label:'弱电箱', room:'入户' },
+
+    // 电竞室
+    { layer:'power', type:'outlet5', x:600, y:1000, label:'电脑插座×2', room:'电竞室' },
+    { layer:'power', type:'outlet5', x:600, y:1400, label:'显示器插座×2', room:'电竞室' },
+    { layer:'power', type:'outlet16', x:300, y:600, label:'空调 16A', room:'电竞室' },
+    { layer:'power', type:'switch1', x:3400, y:2500, label:'单控（顶灯）', room:'电竞室' },
+    { layer:'power', type:'ceiling', x:1900, y:1400, label:'吸顶灯', room:'电竞室' },
+    { layer:'weak', type:'network', x:800, y:1000, label:'网线', room:'电竞室' },
+
+    // 次卧
+    { layer:'power', type:'outlet5', x:600, y:3200, label:'床头左', room:'次卧' },
+    { layer:'power', type:'outlet5', x:2200, y:3200, label:'床头右', room:'次卧' },
+    { layer:'power', type:'outlet5', x:2800, y:3600, label:'书桌插座×2', room:'次卧' },
+    { layer:'power', type:'outlet16', x:300, y:3000, label:'空调 16A', room:'次卧' },
+    { layer:'power', type:'switch2', x:3400, y:4400, label:'双控（门口）', room:'次卧' },
+    { layer:'power', type:'switch2', x:1400, y:3200, label:'双控（床头）', room:'次卧' },
+    { layer:'power', type:'ceiling', x:1900, y:3700, label:'吸顶灯', room:'次卧' },
+    { layer:'weak', type:'network', x:2800, y:3600, label:'网线', room:'次卧' },
+
+    // 厨房
+    { layer:'power', type:'outlet5', x:500, y:5800, label:'操作台插座×4', room:'厨房' },
+    { layer:'power', type:'outlet16', x:1500, y:6400, label:'洗碗机 16A', room:'厨房' },
+    { layer:'power', type:'outlet16', x:2100, y:6400, label:'蒸烤箱 16A', room:'厨房' },
+    { layer:'power', type:'outlet5', x:3200, y:6000, label:'冰箱', room:'厨房' },
+    { layer:'power', type:'outlet5', x:500, y:5500, label:'油烟机', room:'厨房' },
+    { layer:'power', type:'switch1', x:3400, y:5300, label:'开关（灯+灯带）', room:'厨房' },
+    { layer:'power', type:'ceiling', x:1900, y:6000, label:'吸顶灯', room:'厨房' },
+    { layer:'power', type:'strip', x:1400, y:5700, label:'操作台灯带', room:'厨房' },
+
+    // 卫生间
+    { layer:'power', type:'outlet5', x:5600, y:1800, label:'防溅（吹风机）', room:'卫生间' },
+    { layer:'power', type:'outlet5', x:5800, y:2000, label:'智能马桶', room:'卫生间' },
+    { layer:'power', type:'outlet5', x:4400, y:1800, label:'电热毛巾架', room:'卫生间' },
+    { layer:'power', type:'switch1', x:6200, y:2200, label:'门外开关（灯+浴霸）', room:'卫生间' },
+    { layer:'power', type:'downlight', x:5000, y:1200, label:'筒灯', room:'卫生间' },
+    { layer:'power', type:'downlight', x:5400, y:1200, label:'筒灯', room:'卫生间' },
+
+    // 厅（餐厅）
+    { layer:'power', type:'outlet5', x:4000, y:3800, label:'墙面插座', room:'厅' },
+    { layer:'power', type:'outlet5', x:6800, y:3800, label:'墙面插座', room:'厅' },
+    { layer:'power', type:'outlet5', x:5200, y:4200, label:'地插（火锅）', room:'厅' },
+    { layer:'power', type:'switch1', x:6800, y:2800, label:'开关（顶灯）', room:'厅' },
+    { layer:'power', type:'ceiling', x:5200, y:3400, label:'餐厅吊灯', room:'厅' },
+    { layer:'weak', type:'wifi', x:5200, y:3400, label:'WiFi AP', room:'厅' },
+
+    // 主卧
+    { layer:'power', type:'outlet5', x:9800, y:1600, label:'床头左+USB', room:'主卧' },
+    { layer:'power', type:'outlet5', x:11600, y:1600, label:'床头右+USB', room:'主卧' },
+    { layer:'power', type:'outlet5', x:12400, y:800, label:'书桌插座×2', room:'主卧' },
+    { layer:'power', type:'outlet5', x:12400, y:2400, label:'梳妆台', room:'主卧' },
+    { layer:'power', type:'outlet16', x:12800, y:1800, label:'空调 16A', room:'主卧' },
+    { layer:'power', type:'switch2', x:8400, y:2800, label:'双控（门口）', room:'主卧' },
+    { layer:'power', type:'switch2', x:10700, y:1600, label:'双控（床头）', room:'主卧' },
+    { layer:'power', type:'ceiling', x:10800, y:1800, label:'吸顶灯', room:'主卧' },
+    { layer:'power', type:'strip', x:10700, y:1200, label:'床头灯带', room:'主卧' },
+    { layer:'weak', type:'network', x:12400, y:800, label:'网线', room:'主卧' },
+
+    // 会厅
+    { layer:'power', type:'outlet5', x:7500, y:5400, label:'沙发左', room:'会厅' },
+    { layer:'power', type:'outlet5', x:11000, y:5400, label:'沙发右', room:'会厅' },
+    { layer:'power', type:'outlet5', x:9200, y:7100, label:'电视墙×3', room:'会厅' },
+    { layer:'power', type:'outlet5', x:12600, y:7000, label:'扫地机器人', room:'会厅' },
+    { layer:'power', type:'outlet16', x:12800, y:5000, label:'空调柜机 16A', room:'会厅' },
+    { layer:'power', type:'switch2', x:7400, y:4200, label:'双控（门口）', room:'会厅' },
+    { layer:'power', type:'switch2', x:8800, y:5800, label:'双控（沙发旁）', room:'会厅' },
+    { layer:'power', type:'ceiling', x:9800, y:5600, label:'主灯', room:'会厅' },
+    { layer:'power', type:'strip', x:9800, y:5000, label:'氛围灯带', room:'会厅' },
+    { layer:'power', type:'downlight', x:8500, y:5200, label:'筒灯', room:'会厅' },
+    { layer:'power', type:'downlight', x:11000, y:5200, label:'筒灯', room:'会厅' },
+    { layer:'weak', type:'network', x:9200, y:7100, label:'网线+HDMI', room:'会厅' },
+
+    // 水路 — 厨房
+    { layer:'water', type:'hotcold', x:700, y:6500, label:'水槽冷热水', room:'厨房' },
+    { layer:'water', type:'cold', x:1500, y:6600, label:'洗碗机给水', room:'厨房' },
+    { layer:'water', type:'drain', x:700, y:6700, label:'水槽排水', room:'厨房' },
+    { layer:'water', type:'drain', x:1500, y:6700, label:'洗碗机排水', room:'厨房' },
+    { layer:'water', type:'hotcold', x:400, y:5100, label:'热水器进出水', room:'厨房' },
+    { layer:'water', type:'valve', x:400, y:5300, label:'总阀门', room:'厨房' },
+
+    // 水路 — 卫生间
+    { layer:'water', type:'hotcold', x:5400, y:1600, label:'洗手盆冷热水', room:'卫生间' },
+    { layer:'water', type:'cold', x:5800, y:2100, label:'马桶给水', room:'卫生间' },
+    { layer:'water', type:'hotcold', x:4600, y:700, label:'淋浴冷热水', room:'淋浴房' },
+    { layer:'water', type:'floor_drain', x:4800, y:900, label:'地漏（湿区）', room:'淋浴房' },
+    { layer:'water', type:'floor_drain', x:5600, y:1900, label:'地漏（干区）', room:'卫生间' },
+    { layer:'water', type:'drain', x:5400, y:1700, label:'洗手盆排水', room:'卫生间' },
+    { layer:'water', type:'valve', x:5200, y:2300, label:'角阀', room:'卫生间' },
+  ];
+
+  defaults.forEach(d => { d.id = nextId++; state.points.push(d); });
+
+  // Default lines (switch → light connections)
+  const wireData = [
+    { room: '电竞室', from: 'switch1', to: 'ceiling' },
+    { room: '次卧', from: 'switch2', to: 'ceiling' },
+    { room: '厨房', from: 'switch1', to: 'ceiling' },
+    { room: '卫生间', from: 'switch1', to: 'downlight' },
+    { room: '厅', from: 'switch1', to: 'ceiling' },
+    { room: '主卧', from: 'switch2', to: 'ceiling' },
+    { room: '会厅', from: 'switch2', to: 'ceiling' },
+  ];
+  wireData.forEach(w => {
+    const from = state.points.find(p => p.room === w.room && p.type === w.from);
+    const to = state.points.find(p => p.room === w.room && p.type === w.to);
+    if (from && to) {
+      state.lines.push({ id: nextId++, layer: 'power', x1: from.x, y1: from.y, x2: to.x, y2: to.y, lineType: 'power' });
+    }
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  const loaded = await loadFromFile();
+  if (!loaded) loadDefaults();
+  markUnsaved(false);
+
+  const onImgReady = () => {
+    imgW = img.naturalWidth;
+    imgH = img.naturalHeight;
+    render();
+    fitView();
+  };
+
+  img.onload = onImgReady;
+  if (img.complete && img.naturalWidth > 0) onImgReady();
+
+  // Warn before leaving with unsaved changes
+  window.addEventListener('beforeunload', (e) => {
+    if (hasUnsaved) { e.preventDefault(); e.returnValue = ''; }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
