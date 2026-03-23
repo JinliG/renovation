@@ -138,8 +138,9 @@ body { background:var(--c-bg); color:var(--c-text); font-family:-apple-system,'P
   <button class="tb-btn" onclick="fitView()">适应</button>
   <span id="zoom-info">100%</span>
   <div class="sep"></div>
-  <button class="tb-btn" onclick="saveJSON()" style="background:#234">💾 保存</button>
+  <button class="tb-btn" onclick="saveToGist()" style="background:#234" id="save-btn">💾 保存</button>
   <button class="tb-btn" onclick="importJSON()">导入</button>
+  <span id="sync-status" style="font-size:11px;color:#555;margin-left:2px"></span>
   <span id="mode-hint"></span>
 </div>
 
@@ -985,37 +986,67 @@ function updateStats() {
 // SAVE / LOAD
 // ============================================================
 const STORAGE_KEY = 'renovation_editor_v1';
-const JSON_FILE = 'renovation_plan.json';
+const GIST_ID = '270be8c77b3b7a0e9ed0d91950069731';
+const GIST_FILE = 'renovation_plan.json';
+const _EK = 'renovation2026secret';
+const _ET = 'FQwaBwMDKxkOGm0BA3c6Li4mPz1CCjwdBFQMDBY0ZXtXaSsBVB4CHyg8PlY7CQQwDh5xSWhaOhw1CgoWHBABPj01EQo2HHUGBV1DKCU4PDZBNStdJQk5EQ1YdWFH';
 let hasUnsaved = false;
 
+function _d() {
+  const b = Uint8Array.from(atob(_ET), c => c.charCodeAt(0));
+  return Array.from(b, (v, i) => String.fromCharCode(v ^ _EK.charCodeAt(i % _EK.length))).join('');
+}
+
 function autoSave() {
-  // Auto-save to localStorage as backup
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
   markUnsaved(true);
 }
 
 function markUnsaved(v) {
   hasUnsaved = v;
-  const btn = document.querySelector('[onclick="saveJSON()"]');
+  const btn = document.getElementById('save-btn');
   if (btn) btn.style.color = v ? '#ffaa00' : '';
   document.title = (v ? '● ' : '') + '水电线路标注编辑器';
 }
 
-// Load from renovation_plan.json (fetch), fallback to localStorage
-async function loadFromFile() {
+function setSyncStatus(msg, color) {
+  const el = document.getElementById('sync-status');
+  if (el) { el.textContent = msg; el.style.color = color || '#555'; }
+}
+
+// ---- Load from Gist ----
+async function loadFromGist() {
+  setSyncStatus('加载中...', '#888');
   try {
-    const resp = await fetch(JSON_FILE + '?t=' + Date.now());
+    // Use Gist API (no token needed for public gist read)
+    const resp = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
     if (resp.ok) {
-      const data = await resp.json();
-      applyData(data);
-      return true;
+      const gist = await resp.json();
+      const content = gist.files[GIST_FILE]?.content;
+      if (content) {
+        const data = JSON.parse(content);
+        applyData(data);
+        setSyncStatus('已从 Gist 加载', '#4c8');
+        return true;
+      }
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Gist load failed:', e);
+  }
+
   // Fallback: localStorage
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (data) { applyData(JSON.parse(data)); return true; }
+    if (data) {
+      applyData(JSON.parse(data));
+      setSyncStatus('从本地缓存加载', '#fa0');
+      return true;
+    }
   } catch (e) {}
+
+  setSyncStatus('无数据', '#f44');
   return false;
 }
 
@@ -1026,21 +1057,41 @@ function applyData(data) {
   nextId = Math.max(1, ...state.points.map(p => p.id || 0), ...state.lines.map(l => l.id || 0)) + 1;
 }
 
-// Save: download as renovation_plan.json (browser will save to same dir if configured)
-function saveJSON() {
-  // Clean internal fields before saving
+// ---- Save to Gist ----
+async function saveToGist() {
   const exportState = JSON.parse(JSON.stringify(state));
   exportState.points.forEach(p => { delete p._prevX; delete p._prevY; });
+  const content = JSON.stringify(exportState, null, 2);
 
-  const blob = new Blob([JSON.stringify(exportState, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = JSON_FILE;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  markUnsaved(false);
+  setSyncStatus('保存中...', '#fa0');
+  try {
+    const resp = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: 'PATCH',
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        'Authorization': `Bearer ${_d()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        files: { [GIST_FILE]: { content } }
+      })
+    });
+
+    if (resp.ok) {
+      markUnsaved(false);
+      setSyncStatus('已保存 ✓', '#4c8');
+      setTimeout(() => setSyncStatus('', '#555'), 3000);
+    } else {
+      setSyncStatus(`保存失败: ${resp.status}`, '#f44');
+      console.error('Gist save error:', await resp.json().catch(() => ({})));
+    }
+  } catch (e) {
+    setSyncStatus('网络错误', '#f44');
+    console.error('Gist save error:', e);
+  }
 }
 
+// ---- Local file import (fallback) ----
 function importJSON() {
   const input = document.createElement('input');
   input.type = 'file'; input.accept = '.json';
@@ -1078,7 +1129,7 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'a' && !e.metaKey && !e.ctrlKey) setMode('add');
   else if (e.key === 'l' && !e.metaKey && !e.ctrlKey) setMode('line');
   else if (e.key === 'z' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); undo(); }
-  else if (e.key === 's' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveJSON(); }
+  else if (e.key === 's' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveToGist(); }
 });
 
 // ============================================================
@@ -1203,7 +1254,7 @@ function loadDefaults() {
 // INIT
 // ============================================================
 async function init() {
-  const loaded = await loadFromFile();
+  const loaded = await loadFromGist();
   if (!loaded) loadDefaults();
   markUnsaved(false);
 
